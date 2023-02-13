@@ -1,0 +1,93 @@
+//
+//References:
+//https://developer.android.com/guide/topics/sensors/sensors_motion
+//
+
+//LOG:
+// 02122023 - This has the initial config for working with accel to determine if shaking.
+// 02132023 - Added in switching between shaking and bopping.
+
+package com.example.project1
+
+import android.content.Context
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.view.View
+import android.widget.ImageButton
+import android.widget.TextView
+import kotlin.math.sqrt
+
+
+class MainActivity : AppCompatActivity(), SensorEventListener, View.OnClickListener
+{
+    private lateinit var sensorManagerACC: SensorManager
+    var accel = 0f
+    var curraccel = 0f
+    var prevaccel = 0f
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        randomize()
+    }
+
+    fun randomize()
+    {
+        var comm =findViewById<TextView>(R.id.textView)
+
+        var rand = (0..1).random()
+        if(rand == 0){comm.text = "Shake It"; ShakeIt()}
+        else if(rand==1){comm.text = "Bop It"; BopIt()}
+    }
+
+    fun BopIt()
+    {
+        var comm =findViewById<TextView>(R.id.textView)
+        comm.text = "Bop It"
+
+        val bopbutton = findViewById<ImageButton>(R.id.imageButton)
+        bopbutton.setOnClickListener(this)
+    }
+    override fun onClick(v:View?) {
+        var comm =findViewById<TextView>(R.id.textView)
+        if(comm.text == "Bop It") {randomize()}
+    }
+
+    fun ShakeIt()
+    {
+        sensorManagerACC = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        sensorManagerACC.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.also{sensorManagerACC.registerListener(this,
+            it, SensorManager.SENSOR_DELAY_FASTEST,
+            SensorManager.SENSOR_DELAY_FASTEST)}
+
+        accel = 10f
+        curraccel = SensorManager.GRAVITY_EARTH
+        prevaccel = SensorManager.GRAVITY_EARTH
+    }
+
+    override fun onSensorChanged(event:SensorEvent) {
+        var comm =findViewById<TextView>(R.id.textView)
+        if(event.sensor.type == Sensor.TYPE_ACCELEROMETER && comm.text =="Shake It"){
+            prevaccel = curraccel
+
+            val x = event.values[0] //Accel F along x axis (including gravity)
+            val y = event.values[1] //Accel F along y axis (including gravity)
+            val z = event.values[2] //Accel F along z axis (including gravity)
+            curraccel = sqrt((x * x + y * y + z * z).toDouble()).toFloat()
+
+            accel = accel * 0.9f + (curraccel - prevaccel)
+
+            if(accel > 10){
+                comm.text = "Shaking detected"
+                randomize()
+            }
+        }
+
+    }
+    override fun onAccuracyChanged(p0: Sensor?, p1: Int) {}
+}
