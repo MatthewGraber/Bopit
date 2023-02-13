@@ -4,7 +4,7 @@
 //
 
 //LOG:
-// 02122023 - This has the initial config for working with accel to determine if shaking
+// 02122023 - This has the initial config for working with accel to determine if shaking. Doesn't have intent exchanges. Doesn't have audio.
 
 package com.example.project1
 
