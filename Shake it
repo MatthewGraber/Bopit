@@ -1,1 +1,69 @@
+//
+//References:
+//https://developer.android.com/guide/topics/sensors/sensors_motion
+//
 
+//LOG:
+// 02122023 - This has the initial config for working with accel to determine if shaking
+
+package com.example.project1
+
+import android.content.Context
+import android.content.Intent
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.widget.TextView
+import kotlin.math.sqrt
+
+
+class MainActivity : AppCompatActivity(), SensorEventListener {
+    private lateinit var sensorManager: SensorManager
+
+    var accel = 0f
+    var curraccel = 0f
+    var prevaccel = 0f
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.also{sensorManager.registerListener(this,
+            it, SensorManager.SENSOR_DELAY_FASTEST,
+            SensorManager.SENSOR_DELAY_FASTEST)}
+
+        accel = 10f
+        curraccel = SensorManager.GRAVITY_EARTH
+        prevaccel = SensorManager.GRAVITY_EARTH
+    }
+
+    override fun onSensorChanged(event:SensorEvent) {
+        if(event.sensor.type == Sensor.TYPE_ACCELEROMETER){
+            prevaccel = curraccel
+
+            val x = event.values[0] //Accel F along x axis (including gravity)
+            val y = event.values[1] //Accel F along y axis (including gravity)
+            val z = event.values[2] //Accel F along z axis (including gravity)
+            curraccel = sqrt((x * x + y * y + z * z).toDouble()).toFloat()
+
+            accel = accel * 0.9f + (curraccel - prevaccel)
+
+            var shakedetect =findViewById<TextView>(R.id.textView) //for now
+            //Either initialize all other options including this one
+            //or initialize a loading screen to randomize
+
+            //val intent1 = Intent(this, ...)
+            if(accel > 20){
+                //will need to replace this later
+                shakedetect.text = "Shaking detected!!!"
+
+                //startActivity(intent1)
+            }
+        }
+    }
+    override fun onAccuracyChanged(p0: Sensor?, p1: Int) {}
+}
