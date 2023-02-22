@@ -6,6 +6,7 @@
 //LOG:
 // 02122023 - This has the initial config for working with accel to determine if shaking.
 // 02132023 - Added in switching between shaking and bopping.
+// 0222/2023 - Twisting and shaking separated and bopping updated with multicolors
 
 package com.example.project1
 
@@ -17,76 +18,110 @@ import android.os.Bundle
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.view.View
-import android.widget.ImageButton
+import android.widget.Button
 import android.widget.TextView
-import kotlin.math.sqrt
 
 
 class MainActivity : AppCompatActivity(), SensorEventListener, View.OnClickListener
 {
     private lateinit var sensorManagerACC: SensorManager
+    
+    //variables for shake it
     var accel = 0f
     var curraccel = 0f
     var prevaccel = 0f
+    //variables for twist it
+    private val accelerometerReading = FloatArray(3)
+    private val magnetometerReading = FloatArray(3)
+    private val rotationMatrix = FloatArray(9)
+    private val orientationAngles = FloatArray(3)
+    var preOr = 0f
+    var CurrOr = 0f
+    //variables for Bop it
+    private lateinit var color: String
+    //variables for textbox
+    private lateinit var comm: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        
+        comm = findViewById < TextView >(R.id.textView)
+
+        val rbutton = findViewById<Button>(R.id.redbutton)
+        rbutton.setOnClickListener(this)
+        val ybutton = findViewById<Button>(R.id.yellowbutton)
+        ybutton.setOnClickListener(this)
+        val gbutton = findViewById<Button>(R.id.greenbutton)
+        gbutton.setOnClickListener(this)
+        val bbutton = findViewById<Button>(R.id.bluebutton)
+        bbutton.setOnClickListener(this)
+
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.also{
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_FASTEST,
+            SensorManager.SENSOR_DELAY_FASTEST)}
+        sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)?.also {
+            sensorManager.registerListener(this,it,SensorManager.SENSOR_DELAY_FASTEST) }
 
         randomize()
     }
 
     fun randomize()
     {
-        var comm =findViewById<TextView>(R.id.textView)
-
-        var rand = (0..1).random()
+        var rand = (0..2).random()
         if(rand == 0){comm.text = "Shake It"; ShakeIt()}
-        else if(rand==1){comm.text = "Bop It"; BopIt()}
+        else if(rand==1){BopIt()}
+        else{comm.text = "Twist It"}
     }
 
     fun BopIt()
     {
-        var comm =findViewById<TextView>(R.id.textView)
-        comm.text = "Bop It"
-
-        val bopbutton = findViewById<ImageButton>(R.id.imageButton)
-        bopbutton.setOnClickListener(this)
+        color = arrayOf("red", "blue", "green", "yellow").random()
+        var task = "Bop It: $color"
+        comm.text = task
     }
-    override fun onClick(v:View?) {
-        var comm =findViewById<TextView>(R.id.textView)
-        if(comm.text == "Bop It") {randomize()}
+    override fun onClick(v:View) {
+        if(v.id==R.id.bluebutton && color == "blue"){randomize()}
+        else if(v.id==R.id.redbutton && color == "red"){randomize()}
+        else if(v.id==R.id.yellowbutton && color == "yellow"){randomize()}
+        else if(v.id==R.id.greenbutton && color == "green"){randomize()}
     }
 
     fun ShakeIt()
     {
-        sensorManagerACC = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        sensorManagerACC.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.also{sensorManagerACC.registerListener(this,
-            it, SensorManager.SENSOR_DELAY_FASTEST,
-            SensorManager.SENSOR_DELAY_FASTEST)}
-
         accel = 10f
         curraccel = SensorManager.GRAVITY_EARTH
         prevaccel = SensorManager.GRAVITY_EARTH
     }
 
     override fun onSensorChanged(event:SensorEvent) {
-        var comm =findViewById<TextView>(R.id.textView)
-        if(event.sensor.type == Sensor.TYPE_ACCELEROMETER && comm.text =="Shake It"){
+        var rotdeg: Double = 0.0
+        
+        if(event.sensor.type == Sensor.TYPE_ACCELEROMETER){
+            //code for twist it
+            System.arraycopy(event.values, 0, accelerometerReading, 0, accelerometerReading.size)
+            
+            //code for shake it
             prevaccel = curraccel
-
-            val x = event.values[0] //Accel F along x axis (including gravity)
-            val y = event.values[1] //Accel F along y axis (including gravity)
-            val z = event.values[2] //Accel F along z axis (including gravity)
-            curraccel = sqrt((x * x + y * y + z * z).toDouble()).toFloat()
-
+            curraccel = event.values[1]
             accel = accel * 0.9f + (curraccel - prevaccel)
-
-            if(accel > 10){
-                comm.text = "Shaking detected"
-                randomize()
-            }
         }
+        else if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
+            System.arraycopy(event.values, 0, magnetometerReading, 0, magnetometerReading.size)
+        }
+        
+        //code for twist it
+        preOr = CurrOr
+        SensorManager.getRotationMatrix(rotationMatrix, null, accelerometerReading, magnetometerReading)
+        SensorManager.getOrientation(rotationMatrix, orientationAngles)
+        CurrOr = orientationAngles[0]*orientationAngles[0]+
+                orientationAngles[1]* orientationAngles[1]+
+                orientationAngles[2]*orientationAngles[2]
+        rotdeg = Math.toDegrees((CurrOr-preOr).toDouble())
+
+        if(comm.text == "Shake It" && accel > 10 && rotdeg < 45){randomize()}
+        else if(comm.text == "Twist It" && accel < 10 && rotdeg > 45){randomize()}
 
     }
     override fun onAccuracyChanged(p0: Sensor?, p1: Int) {}
