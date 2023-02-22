@@ -104,7 +104,10 @@ class MainActivity : AppCompatActivity(), SensorEventListener, View.OnClickListe
             
             //code for shake it
             prevaccel = curraccel
-            curraccel = event.values[1]
+            val x = event.values[0] //Accel F along x axis (including gravity)
+            val y = event.values[1] //Accel F along y axis (including gravity)
+            val z = event.values[2] //Accel F along z axis (including gravity)
+            curraccel = sqrt((x * x + y * y + z * z).toDouble()).toFloat()
             accel = accel * 0.9f + (curraccel - prevaccel)
         }
         else if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
