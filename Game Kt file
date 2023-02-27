@@ -21,6 +21,8 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import kotlin.math.sqrt
+import android.os.CountDownTimer
+import kotlin.system.exitProcess
 
 
 class MainActivity : AppCompatActivity(), SensorEventListener, View.OnClickListener
@@ -42,6 +44,11 @@ class MainActivity : AppCompatActivity(), SensorEventListener, View.OnClickListe
     private lateinit var color: String
     //variables for textbox
     private lateinit var comm: TextView
+    //variables for timer
+    lateinit var gametimer: CountDownTimer
+    var START_MILLI_SECONDS = 10000L
+    var isRunning: Boolean = false;
+    var time_in_milli_seconds = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,7 +72,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener, View.OnClickListe
         sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)?.also {
             sensorManager.registerListener(this,it,SensorManager.SENSOR_DELAY_FASTEST) }
 
-        randomize()
+        playGame(START_MILLI_SECONDS)
     }
 
     fun randomize()
@@ -83,10 +90,50 @@ class MainActivity : AppCompatActivity(), SensorEventListener, View.OnClickListe
         comm.text = task
     }
     override fun onClick(v:View) {
-        if(v.id==R.id.bluebutton && color == "blue"){randomize()}
-        else if(v.id==R.id.redbutton && color == "red"){randomize()}
-        else if(v.id==R.id.yellowbutton && color == "yellow"){randomize()}
-        else if(v.id==R.id.greenbutton && color == "green"){randomize()}
+        if(v.id==R.id.bluebutton && color == "blue"){
+            gametimer.cancel()
+            isRunning = false
+            score++
+            playGame(START_MILLI_SECONDS)
+        }
+        else if(v.id==R.id.bluebutton && color != "blue"){
+            gametimer.cancel()
+            isRunning = false
+            endGame()
+        }
+        else if(v.id==R.id.redbutton && color == "red"){
+            gametimer.cancel()
+            isRunning = false
+            score++
+            playGame(START_MILLI_SECONDS)
+        }
+        else if(v.id==R.id.redbutton && color != "red"){
+            gametimer.cancel()
+            isRunning = false
+            endGame()
+        }
+        else if(v.id==R.id.yellowbutton && color == "yellow"){
+            gametimer.cancel()
+            isRunning = false
+            score++
+            playGame(START_MILLI_SECONDS)
+        }
+        else if(v.id==R.id.yellowbutton && color != "yellow"){
+            gametimer.cancel()
+            isRunning = false
+            endGame()
+        }
+        else if(v.id==R.id.greenbutton && color == "green"){
+            gametimer.cancel()
+            isRunning = false
+            score++
+            playGame(START_MILLI_SECONDS)
+        }
+        else if(v.id==R.id.greenbutton && color != "green"){
+            gametimer.cancel()
+            isRunning = false
+            endGame()
+        }
     }
 
     fun ShakeIt()
@@ -124,9 +171,51 @@ class MainActivity : AppCompatActivity(), SensorEventListener, View.OnClickListe
                 orientationAngles[2]*orientationAngles[2]
         rotdeg = Math.toDegrees((CurrOr-preOr).toDouble())
 
-        if(comm.text == "Shake It" && accel > 10 && rotdeg < 45){randomize()}
-        else if(comm.text == "Twist It" && accel < 10 && rotdeg > 45){randomize()}
+        if(comm.text == "Shake It" && accel > 10 && rotdeg < 45){
+            gametimer.cancel()
+            isRunning = false
+            score++
+            playGame(START_MILLI_SECONDS)
+        }
+        else if(comm.text == "Shake It" && rotdeg > 45){
+            gametimer.cancel()
+            isRunning = false
+            endGame()
+        }
+        else if(comm.text == "Twist It" && accel < 10 && rotdeg > 45){
+            gametimer.cancel()
+            isRunning = false
+            score++
+            playGame(START_MILLI_SECONDS)
+        }
+        else if(comm.text == "Twist It" && accel > 10){
+            gametimer.cancel()
+            isRunning = false
+            endGame()
+        }
 
     }
     override fun onAccuracyChanged(p0: Sensor?, p1: Int) {}
+    
+    fun playGame(time_in_seconds: Long) {
+        randomize()
+        // TODO: Play the correct sound
+        gametimer = object : CountDownTimer(time_in_seconds, 100) {
+            override fun onTick(millisUntilFinished: Long) {
+                time_in_milli_seconds = millisUntilFinished
+            }
+            override fun onFinish() {
+                endGame()
+            }
+        }
+        gametimer.start()
+        isRunning = true
+    }
+    fun endGame() {
+        val intent = Intent(this, EndActivity::class.java)
+        intent.putExtra("Score", score.toString());
+        startActivity(intent)
+        this@Game.finish()
+        exitProcess(0)
+    }
 }
