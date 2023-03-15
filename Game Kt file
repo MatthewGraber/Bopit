@@ -5,6 +5,14 @@ package com.example.project1
 //https://developer.android.com/guide/topics/sensors/sensors_motion
 //https://medium.com/@olajhidey/working-with-countdown-timer-in-android-studio-using-kotlin-39fd7826e205
 //https://stackoverflow.com/questions/47001467/how-to-use-settextcolorhexavalue-on-kotlin-for-android
+//https://www.geeksforgeeks.org/android-sensors-with-example/
+//https://developer.android.com/guide/topics/sensors/sensors_position
+//https://developer.android.com/guide/topics/sensors/sensors_motion
+//https://developer.android.com/reference/android/hardware/SensorEvent#sensor
+//https://developer.android.com/reference/android/hardware/Sensor
+//https://developer.android.com/reference/android/hardware/SensorManager
+//https://www.geeksforgeeks.org/how-to-detect-shake-event-in-android/
+//https://stackoverflow.com/questions/14574879/how-to-detect-movement-of-an-android-device
 //
 
 //LOG:
